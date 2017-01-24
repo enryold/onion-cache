@@ -278,4 +278,70 @@ public class OnionCacheTest
 
     }
 
+
+    @Test
+    public void test_REDIS_DYNAMODB_EXPIRATION_FALLBACK()
+    {
+        redisService
+                .withKeyFunction(new CacheLayerKey());
+
+
+        // Setup cache layers (Key function, Cache service, Model)
+        /** THIS IS A FAKE MARSHALLER CAUSE DYNAMO-DB ALREADY HAVE HIS MARSHALLER */
+        CacheLayer DynamoDBLayer = new CacheLayer<DynamoDBService, CacheLayerDynamoDBMarshaller<Person>, Person>()
+                .withMainService(dynamoDBService)
+                .withMainServiceMarshaller(new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class));
+
+
+
+        CacheLayer redisLayer = new CacheLayer<RedisService, CacheLayerJsonMarshaller<Person>, Person>()
+                .withMainService(redisService)
+                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class))
+                .withDefaultExpiration(60);
+
+
+        // Test with fake model Person
+        OnionCache<Person> onionCache = new OnionCache<Person>()
+                .addLayer(redisLayer)
+                .addLayer(DynamoDBLayer);
+
+        Person goJason = new Person("Jason", "Bourne");
+
+        boolean setResult = onionCache.set(goJason.getName(), goJason.getSurname(), goJason, 5);
+
+        // Check if result is true
+        Assert.assertTrue(setResult);
+
+        // Check both service for object
+        Assert.assertTrue(redisService.get(goJason.getName(), goJason.getSurname(), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(dynamoDBService.get(goJason.getName(), goJason.getSurname(), new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
+
+        try {
+            Thread.sleep(5000L);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Redis was expired
+        Assert.assertTrue(!redisService.get(goJason.getName(), goJason.getSurname(), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+        // Dynamo still have object
+        Assert.assertTrue(dynamoDBService.get(goJason.getName(), goJason.getSurname(), new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
+
+
+
+        // Get Object Again - This call put again object into redis.
+        Optional<Person> object = onionCache.findByHashAndRange(goJason.getName(), goJason.getSurname());
+
+        // Redis now have object
+        Assert.assertTrue(redisService.get(goJason.getName(), goJason.getSurname(), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+
+        Assert.assertTrue(object.isPresent());
+        Assert.assertTrue(object.get().getName().equals(goJason.getName()));
+        Assert.assertTrue(object.get().getSurname().equals(goJason.getSurname()));
+
+
+    }
+
 }

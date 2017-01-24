@@ -44,6 +44,7 @@ public class DynamoDBService implements ICacheLayerService<CacheLayerKey> {
 
     @Override
     public boolean delete(String hashKey, String rangeKey) {
+        // UNSUPPORTED RIGHT NOW
         return false;
     }
 
