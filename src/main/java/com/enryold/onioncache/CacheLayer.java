@@ -1,10 +1,7 @@
 package com.enryold.onioncache;
 
 
-import com.enryold.onioncache.interfaces.ICacheLayer;
-import com.enryold.onioncache.interfaces.ICacheLayerKey;
-import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
-import com.enryold.onioncache.interfaces.ICacheLayerService;
+import com.enryold.onioncache.interfaces.*;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -14,7 +11,7 @@ import java.util.Optional;
 /**
  * Created by enryold on 16/01/17.
  */
-public class CacheLayer<S extends ICacheLayerService, M extends ICacheLayerMarshaller<T,?>, T> implements ICacheLayer<S, M, T> {
+public class CacheLayer<S extends ICacheLayerService, M extends ICacheLayerMarshaller<T,?>, T extends ICacheLayerDataModel> implements ICacheLayer<S, M, T> {
 
     private S service;
     private int defaultExpiration;
@@ -41,47 +38,23 @@ public class CacheLayer<S extends ICacheLayerService, M extends ICacheLayerMarsh
         return this;
     }
 
-
-
-
-
     @Override
-    public boolean set(T t, String hashKey, String rangeKey, int expire) {
-        return service.setEx(hashKey, rangeKey, t, expire, marshaller) != null;
+    public boolean set(T t) {
+        return service.set(t, marshaller);
+    }
+
+
+    public boolean set(T t, int expire) {
+        return service.setEx(t, expire, marshaller);
     }
 
     @Override
-    public boolean set(T t, String hashKey, int expire) {
-        return this.set(t, hashKey, null, expire);
+    public Optional<T> get(T t) {
+        return service.get(t, marshaller);
     }
 
-    @Override
-    public boolean set(T t, String hashKey) {
-        return this.set(t, hashKey, null, defaultExpiration);
-    }
 
-    @Override
-    public boolean set(T t, String hashKey, String rangeKey) {
-        return this.set(t, hashKey, rangeKey, defaultExpiration);
-    }
-
-    @Override
-    public Optional<T> get(String hashKey) {
-        return this.get(hashKey, null);
-    }
-
-    @Override
-    public Optional<T> get(String hashKey, String rangeKey) {
-        return service.get(hashKey, rangeKey, marshaller);
-    }
-
-    @Override
-    public boolean delete(String hashKey) {
-        return this.delete(hashKey, null);
-    }
-
-    @Override
-    public boolean delete(String hashKey, String rangeKey) {
-        return this.delete(hashKey, rangeKey);
+    public boolean delete(T t) {
+        return service.delete(t);
     }
 }

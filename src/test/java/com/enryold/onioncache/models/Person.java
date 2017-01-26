@@ -9,7 +9,7 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
  * Created by enryold on 17/01/17.
  */
 @DynamoDBTable(tableName = Person.Attributes.TABLE_NAME)
-public class Person
+public class Person extends DynamoDbDataModel
 {
     public static class Attributes {
         public static final String TABLE_NAME = "person";
@@ -46,4 +46,7 @@ public class Person
     public void setSurname(String surname) {
         this.surname = surname;
     }
+
+
+
 }

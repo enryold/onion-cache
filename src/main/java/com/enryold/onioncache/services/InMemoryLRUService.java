@@ -1,7 +1,7 @@
 package com.enryold.onioncache.services;
 
 
-import com.enryold.onioncache.CacheLayerKey;
+import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerService;
 import com.enryold.onioncache.utils.LRUMap;
@@ -9,10 +9,9 @@ import com.enryold.onioncache.utils.LRUMap;
 import java.util.Optional;
 
 
-public class InMemoryLRUService implements ICacheLayerService<CacheLayerKey> {
+public class InMemoryLRUService implements ICacheLayerService {
 
     private LRUMap<String, Object> cache;
-    private CacheLayerKey cacheLayerKey;
 
 
 
@@ -24,36 +23,24 @@ public class InMemoryLRUService implements ICacheLayerService<CacheLayerKey> {
 
 
     @Override
-    public Object set(String hashKey, String rangeKey, Object value, ICacheLayerMarshaller marshaller) {
-
-        Optional result = marshaller.marshall(value);
-        result.ifPresent( r -> cache.put(cacheLayerKey.apply(hashKey, rangeKey), r));
-        return value;
+    public boolean set(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
+        Optional m = marshaller.marshall(value);
+        cache.put(value.dataModelUniqueKey().get(), m.get());
+        return m.isPresent();
     }
 
     @Override
-    public Object setEx(String hashKey, String rangeKey, Object value, int expiration, ICacheLayerMarshaller marshaller) {
-        return this.set(hashKey, rangeKey, value, marshaller);
+    public boolean setEx(ICacheLayerDataModel value, int expiration, ICacheLayerMarshaller marshaller) {
+        return this.set(value, marshaller);
     }
 
     @Override
-    public Optional<Object> get(String hashKey, String rangeKey, ICacheLayerMarshaller marshaller)
-    {
-        Object result = cache.get(cacheLayerKey.apply(hashKey, rangeKey));
-        return (result == null) ? Optional.empty() : marshaller.unMarshall(result);
+    public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
+        return marshaller.unMarshall(cache.get(value.dataModelUniqueKey().get()));
     }
 
     @Override
-    public boolean delete(String hashKey, String rangeKey) {
-        cache.remove(cacheLayerKey.apply(hashKey, rangeKey));
-        return true;
+    public boolean delete(ICacheLayerDataModel value) {
+        return cache.remove(value.dataModelUniqueKey().get()) != null;
     }
-
-    @Override
-    public ICacheLayerService<CacheLayerKey> withKeyFunction(CacheLayerKey k) {
-        this.cacheLayerKey = k;
-        return this;
-    }
-
-
 }
