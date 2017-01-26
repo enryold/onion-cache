@@ -10,6 +10,4 @@ public interface ICacheLayerMarshaller<I, O>
 {
     Optional<O> marshall(I i);
     Optional<I> unMarshall(O o);
-    Class<I> getInputClazz();
-    Class<O> getOutputClazz();
 }

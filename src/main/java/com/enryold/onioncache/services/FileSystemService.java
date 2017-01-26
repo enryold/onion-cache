@@ -1,6 +1,6 @@
 package com.enryold.onioncache.services;
 
-import com.enryold.onioncache.CacheLayerKey;
+import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerService;
 
@@ -16,11 +16,10 @@ import java.util.Optional;
 /**
  * Created by enryold on 18/01/17.
  */
-public class FileSystemService implements ICacheLayerService<CacheLayerKey> {
+public class FileSystemService implements ICacheLayerService {
 
 
     private String basePath;
-    private CacheLayerKey cacheLayerKey;
 
 
     public FileSystemService(String basePath) throws Exception {
@@ -57,53 +56,40 @@ public class FileSystemService implements ICacheLayerService<CacheLayerKey> {
         return new byte[0];
     }
 
-
     @Override
-    public ICacheLayerService<CacheLayerKey> withKeyFunction(CacheLayerKey k) {
-        this.cacheLayerKey = k;
-        return this;
-    }
-
-
-
-    @Override
-    public Object set(String hashKey, String rangeKey, Object value, ICacheLayerMarshaller marshaller) {
-
+    public boolean set(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
         try
         {
-            String key = cacheLayerKey.apply(hashKey, rangeKey);
             Optional result = marshaller.marshall(value);
 
-            if(!result.isPresent()) { return null; }
+            if(!result.isPresent()) { return false; }
 
-            Files.write(pathFromKey(key), byteFromValue(result.get()));
+            Files.write(pathFromKey(value.dataModelUniqueKey().get()), byteFromValue(result.get()));
         }
         catch (FileNotFoundException e)
         {
             e.printStackTrace();
-            return null;
+            return false;
         }
         catch (IOException e) {
             e.printStackTrace();
-            return null;
+            return false;
         }
 
 
-        return value;
+        return true;
     }
 
     @Override
-    public Object setEx(String hashKey, String rangeKey, Object value, int expiration, ICacheLayerMarshaller marshaller)
-    {
-        return this.set(hashKey, rangeKey, value, marshaller);
+    public boolean setEx(ICacheLayerDataModel value, int expiration, ICacheLayerMarshaller marshaller) {
+        return this.set(value, marshaller);
     }
 
     @Override
-    public Optional<Object> get(String hashKey, String rangeKey, ICacheLayerMarshaller marshaller) {
+    public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
         try
         {
-            String key = cacheLayerKey.apply(hashKey, rangeKey);
-            return marshaller.unMarshall(new String(Files.readAllBytes(pathFromKey(key))));
+            return marshaller.unMarshall(new String(Files.readAllBytes(pathFromKey(value.dataModelUniqueKey().get()))));
         }
         catch (IOException e)
         {
@@ -113,14 +99,14 @@ public class FileSystemService implements ICacheLayerService<CacheLayerKey> {
     }
 
     @Override
-    public boolean delete(String hashKey, String rangeKey) {
-
+    public boolean delete(ICacheLayerDataModel value) {
         try {
-            Files.delete(pathFromKey(cacheLayerKey.apply(hashKey, rangeKey)));
+            Files.delete(pathFromKey(value.dataModelUniqueKey().get()));
             return true;
         } catch (IOException e) {
             e.printStackTrace();
             return false;
         }
     }
+
 }

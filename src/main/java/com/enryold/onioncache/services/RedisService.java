@@ -1,24 +1,21 @@
 package com.enryold.onioncache.services;
 
 
-import com.enryold.onioncache.CacheLayerKey;
+import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerService;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 
-public class RedisService implements ICacheLayerService<CacheLayerKey> {
+public class RedisService implements ICacheLayerService {
 
     private JedisPool jedisPool;
     private String host;
     private Integer port;
-    private CacheLayerKey cacheLayerKey;
 
 
 
@@ -37,57 +34,46 @@ public class RedisService implements ICacheLayerService<CacheLayerKey> {
     }
 
     @Override
-    public Optional<Object> get(String hashKey, String rangeKey, ICacheLayerMarshaller marshaller) {
+    public boolean set(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
         try (Jedis jedis = jedisPool.getResource())
         {
-            String result = jedis.get(cacheLayerKey.apply(hashKey, rangeKey));
+            Optional<String> val = marshaller.marshall(value);
+            val.ifPresent( s -> jedis.set(value.dataModelUniqueKey().get(), s));
+            return true;
+        }
+        catch (Exception e) {  }
+        return false;
+    }
+
+    @Override
+    public boolean setEx(ICacheLayerDataModel value, int expiration, ICacheLayerMarshaller marshaller) {
+        try (Jedis jedis = jedisPool.getResource())
+        {
+            Optional<String> val = marshaller.marshall(value);
+            val.ifPresent( s -> jedis.setex(value.dataModelUniqueKey().get(), expiration, s));
+            return true;
+        }
+        catch (Exception e) {  }
+        return false;
+    }
+
+    @Override
+    public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
+        try (Jedis jedis = jedisPool.getResource())
+        {
+            String result = jedis.get(value.dataModelUniqueKey().get());
             return result == null ? Optional.empty() : marshaller.unMarshall(result);
         }
         catch (Exception e) { return Optional.empty(); }
     }
 
     @Override
-    public boolean delete(String hashKey, String rangeKey) {
-        try (Jedis jedis = jedisPool.getResource()) { jedis.del(cacheLayerKey.apply(hashKey, rangeKey)); return true; }
+    public boolean delete(ICacheLayerDataModel value) {
+        try (Jedis jedis = jedisPool.getResource()) { jedis.del(value.dataModelUniqueKey().get()); return true; }
         catch (Exception e) { return false; }
     }
 
-    @Override
-    public Object set(String hashKey, String rangeKey, Object value, ICacheLayerMarshaller marshaller) {
-        try (Jedis jedis = jedisPool.getResource())
-        {
-            if(marshaller.getOutputClazz().equals(String.class))
-            {
-                Optional<String> val = marshaller.marshall(value);
-                val.ifPresent( s -> jedis.set(cacheLayerKey.apply(hashKey, rangeKey), s));
-                return value;
-            }
-        }
-        catch (Exception e) {  }
-        return null;
-    }
 
-    @Override
-    public Object setEx(String hashKey, String rangeKey, Object value, int secondsExpire, ICacheLayerMarshaller marshaller) {
-        try (Jedis jedis = jedisPool.getResource())
-        {
-            if(marshaller.getOutputClazz().equals(String.class))
-            {
-                Optional<String> val = marshaller.marshall(value);
-                val.ifPresent( s -> jedis.setex(cacheLayerKey.apply(hashKey, rangeKey), secondsExpire, s));
-                return value;
-            }
-        }
-        catch (Exception e) {  }
-        return null;
-    }
-
-
-    @Override
-    public ICacheLayerService<CacheLayerKey> withKeyFunction(CacheLayerKey k) {
-        this.cacheLayerKey = k;
-        return this;
-    }
 
 
 }

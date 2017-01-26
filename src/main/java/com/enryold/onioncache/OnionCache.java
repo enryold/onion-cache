@@ -1,5 +1,6 @@
 package com.enryold.onioncache;
 
+import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerService;
 
@@ -10,7 +11,7 @@ import java.util.Optional;
 /**
  * Created by enryold on 17/01/17.
  */
-public class OnionCache<T>
+public class OnionCache<T extends ICacheLayerDataModel>
 {
     private ArrayList<CacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T>> layers = new ArrayList<>();
 
@@ -30,7 +31,7 @@ public class OnionCache<T>
     }
 
 
-    public Optional<T> get(String hash, String range)
+    public Optional<T> get(T t)
     {
         ArrayList<CacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T>> cacheMissLayers = new ArrayList<>();
 
@@ -41,7 +42,7 @@ public class OnionCache<T>
         while (iterator.hasNext())
         {
             CacheLayer<?, ?, T> layer = iterator.next();
-            result = layer.get(hash, range);
+            result = layer.get(t);
             if(result.isPresent()) { break; }
             else{ cacheMissLayers.add(layer); }
         }
@@ -49,22 +50,18 @@ public class OnionCache<T>
         if(cacheMissLayers.size() > 0 && result.isPresent())
         {
             T r = result.get();
-            cacheMissLayers.forEach(o -> o.set(r, hash, range));
+            cacheMissLayers.forEach(o -> o.set(r));
         }
 
         return result;
     }
 
-    public Optional<T> get(String hash)
-    {
-        return this.get(hash, null);
-    }
 
 
-    public boolean set(String hash, String range, T object, int expire)
+    public boolean set(T object, int expire)
     {
         for (CacheLayer<?, ?, T> layer : layers) {
-            if (!layer.set(object, hash, range, expire)) {
+            if (!layer.set(object, expire)) {
                 return false;
             }
         }
@@ -72,10 +69,11 @@ public class OnionCache<T>
 
     }
 
-    public boolean set(String hash, T object, int expire)
+
+    public boolean delete(T object)
     {
         for (CacheLayer<?, ?, T> layer : layers) {
-            if (!layer.set(object, hash, expire)) {
+            if (!layer.delete(object)) {
                 return false;
             }
         }
@@ -83,23 +81,4 @@ public class OnionCache<T>
 
     }
 
-    public boolean set(String hash, String range, T object)
-    {
-        for (CacheLayer<?, ?, T> layer : layers) {
-            if (!layer.set(object, hash, range)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    public boolean set(String hash, T object)
-    {
-        for (CacheLayer<?, ?, T> layer : layers) {
-            if (!layer.set(object, hash)) {
-                return false;
-            }
-        }
-        return true;
-    }
 }

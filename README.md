@@ -21,9 +21,9 @@
 - I try to generealize the concept of Cache Layer in order to write less logic as possible.
 - I came up with 3 main entity that describes a Cache Layer.
   + A service, which represent a client wrapper for cache/datastore service in real world. It must implement 4 basic methods: GET, SET, SETEX, DELETE.
-  + A cacheLayerKey which represent an object that build you key. I use 2 levels of deepness for keys. Hash and Range (Range is optional).
     In this way you can implement your own RedisService that can use HSET instead of SET if a range key is setted.
   + A marshaller, which marshall/unmarshall the data you want to cache. It must implement 2 methods: marshall and unMarshall.
+  + A DataModel that will be the father of your models (!!!)
 - OnionCache addLayer() method will insert a cache layer. The last layer will be the main datasource.
   + A typical use case will be (in order!):
       addLayer(LRU);
@@ -33,13 +33,18 @@
 - At the moment some services are present: LRUCache, Redis, DynamoDb, FileSystem (this is useful if you use as main datastore a network file system like Amazon NFS)
 
 
-##### Little Hack:
+##### Requirements:
 
-My DynamoDbService uses internally DynamodbMapper which is a great way to map your existing model with annotations.
-    In this case your model knows what properties are Hash and Range keys because they are specified into model itself.
-    As you can see in src/test/OnionCacheTest.java I not specify any CacheLayerKey and any Marshaller for this kind of layer.
-    Of course any SET/SETEX call will skip hash and range key parameters, because they are defined in object itself.
-    This is userful for different ORM. 
+- Every model you use with OnionCache must implements the ICacheLayerDataModel interface.
+- ICacheLayerDataModel interface comes with 2 methods: 
+    + ICacheLayerDataModelKey dataModelUniqueKey()
+        * This return an object that extends the interface ICacheLayerDataModelKey, with represent a unique key for your data object.
+    + String dataModelTableName();
+        * This return the model datasource table name.
+
+- Under /models you can find an example with dynamodb as datasource.
+    
+
 
 ##### Let's start:
 
@@ -58,11 +63,9 @@ First of all we have to create all the layers we need in our system design, with
 
 // IN MEMORY LRU SERVICE, 100 is the size of the LRU map. 
 InMemoryLRUService inMemoryLRUService = new InMemoryLRUService(100);
-inMemoryLRUService.withKeyFunction(new CacheLayerKey());
 
 // REDIS SERVICE
 RedisService redisService = new RedisService("localhost", 6379);
-redisService.withKeyFunction(new CacheLayerKey());
 
 // DYNAMODB SERVICE
 DynamoDBService dynamoDBService = new DynamoDBService(dynamodb);
@@ -89,7 +92,7 @@ OnionCache<Person> onionCache = new OnionCache<Person>()
     .addLayer(DynamoDBLayer);
     
 // THEN, WE CAN USER ONIONCACHE TO RETRIEVE OUR OBJECTS FROM THE LAYERS. 
-Optional<Person> object = onionCache.get(goJason.getName(), goJason.getSurname());
+Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
 
 // HOWEVER, WE CAN ALSO SET A NEW OBJECT, WITH CUSTOM DEFAULT EXPIRATION (This works only in Redis/Memcached)
 Person goJason = new Person("Jason", "Bourne");
