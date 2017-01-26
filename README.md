@@ -8,32 +8,31 @@
 
 
 
-## Goal:
-
-##### Build a cache system:
+## Goal - Build a multilayer cache system:
 
 - That makes simple add/remove different layers of cache.
 - With a system that fallback through one or multiple cache layers before getting the needed object from the main datasource.
 
 
-##### How I design it:
+## How I design it:
 
-- I try to generealize the concept of Cache Layer in order to write less logic as possible.
+- I try to generealize the concept of cache layer in order to write less logic as possible.
 - I came up with 3 main entity that describes a Cache Layer.
   + A service, which represent a client wrapper for cache/datastore service in real world. It must implement 4 basic methods: GET, SET, SETEX, DELETE.
-    In this way you can implement your own RedisService that can use HSET instead of SET if a range key is setted.
-  + A marshaller, which marshall/unmarshall the data you want to cache. It must implement 2 methods: marshall and unMarshall.
-  + A DataModel that will be the father of your models (!!!)
+    In this way you can implement your own RedisService that can use HSET instead of SET.
+  + A marshaller, which marshall/unmarshall the data you want to cache. It must implement 2 methods: marshall() and unMarshall().
+  + A DataModel that will be the father of your data models (!!!)
 - OnionCache addLayer() method will insert a cache layer. The last layer will be the main datasource.
   + A typical use case will be (in order!):
       addLayer(LRU);
       addLayer(Redis);
       addLayer(MySQL);
+  + Then, you can get/set/delete your data into multiple level of cache with one call to OnionCache.
 - You can extend it building new services, keys, marshallers.
-- At the moment some services are present: LRUCache, Redis, DynamoDb, FileSystem (this is useful if you use as main datastore a network file system like Amazon NFS)
+- At the moment OnionCache comes with some services: LRUCache, Redis, DynamoDb, FileSystem (this is useful if you use as main datastore a network file system like Amazon NFS)
 
 
-##### Requirements:
+## Requirements:
 
 - Every model you use with OnionCache must implements the ICacheLayerDataModel interface.
 - ICacheLayerDataModel interface comes with 2 methods: 
@@ -46,7 +45,7 @@
     
 
 
-##### Let's start:
+## Let's start:
 
 Imagine a system that saves data on DynamoDb, but some datas are very popular in certain period of time with an increase of throughput-rate.
 In this case is useful to put Redis or Memcached between your webapp and DynamoDb and an LRU cache inside your application to avoid any network call.
@@ -100,5 +99,4 @@ boolean success = onionCache.set(goJason.getName(), goJason.getSurname(), goJaso
 
 
 ```
-
 
