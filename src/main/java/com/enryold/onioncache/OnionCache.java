@@ -1,6 +1,5 @@
 package com.enryold.onioncache;
 
-import com.enryold.onioncache.interfaces.ICacheLayerKey;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerService;
 
@@ -31,7 +30,7 @@ public class OnionCache<T>
     }
 
 
-    public Optional<T> findByHashAndRange(String hash, String range)
+    public Optional<T> get(String hash, String range)
     {
         ArrayList<CacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T>> cacheMissLayers = new ArrayList<>();
 
@@ -56,9 +55,9 @@ public class OnionCache<T>
         return result;
     }
 
-    public Optional<T> findByHash(String hash)
+    public Optional<T> get(String hash)
     {
-        return this.findByHashAndRange(hash, null);
+        return this.get(hash, null);
     }
 
 
