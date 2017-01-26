@@ -39,7 +39,6 @@ My DynamoDbService uses internally DynamodbMapper which is a great way to map yo
     In this case your model knows what properties are Hash and Range keys because they are specified into model itself.
     As you can see in src/test/OnionCacheTest.java I not specify any CacheLayerKey and any Marshaller for this kind of layer.
     Of course any SET/SETEX call will skip hash and range key parameters, because they are defined in object itself.
-
     This is userful for different ORM. 
 
 ##### Let's start:
@@ -48,6 +47,7 @@ Imagine a system that saves data on DynamoDb, but some datas are very popular in
 In this case is useful to put Redis or Memcached between your webapp and DynamoDb and an LRU cache inside your application to avoid any network call.
 
 DRAW.IO
+[[https://github.com/enryold/onion-cache/blob/develop/onion-cache-bootstrap-structure-example.png]]
 
 First of all we have to create all the layers we need in our system design, with their services, keys, and marshallers
 
