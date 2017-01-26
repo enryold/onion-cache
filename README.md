@@ -46,8 +46,7 @@ My DynamoDbService uses internally DynamodbMapper which is a great way to map yo
 Imagine a system that saves data on DynamoDb, but some datas are very popular in certain period of time with an increase of throughput-rate.
 In this case is useful to put Redis or Memcached between your webapp and DynamoDb and an LRU cache inside your application to avoid any network call.
 
-DRAW.IO
-[[https://github.com/enryold/onion-cache/blob/develop/onion-cache-bootstrap-structure-example.png]]
+![alt tag](https://raw.githubusercontent.com/enryold/onion-cache/develop/onion-cache-bootstrap-structure-example.png)
 
 First of all we have to create all the layers we need in our system design, with their services, keys, and marshallers
 
