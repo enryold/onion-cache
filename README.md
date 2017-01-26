@@ -1,7 +1,7 @@
 # onion-cache 
 
 [![Build Status](https://travis-ci.org/enryold/onion-cache.svg?branch=develop)](https://travis-ci.org/enryold/onion-cache)
-
+[![](https://jitpack.io/v/enryold/onion-cache.svg)](https://jitpack.io/#enryold/onion-cache)
 
 # Multilevel cache system for Java 8 
 
@@ -43,6 +43,10 @@
 
 - Under /models you can find an example with dynamodb as datasource.
     
+
+## Installation:
+
+Look at https://jitpack.io/#enryold/onion-cache/
 
 
 ## Let's start:
