@@ -6,14 +6,13 @@ import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
 import com.amazonaws.services.dynamodbv2.model.*;
-import com.amazonaws.services.dynamodbv2.xspec.L;
-import com.enryold.onioncache.marshallers.CacheLayerDynamoDBMarshaller;
-import com.enryold.onioncache.marshallers.CacheLayerJsonMarshaller;
+import com.enryold.onioncache.marshallers.OnionCacheLayerDynamoDBMarshaller;
+import com.enryold.onioncache.marshallers.OnionCacheLayerJsonMarshaller;
 import com.enryold.onioncache.models.Person;
-import com.enryold.onioncache.services.DynamoDBService;
-import com.enryold.onioncache.services.FileSystemService;
-import com.enryold.onioncache.services.InMemoryLRUService;
-import com.enryold.onioncache.services.RedisService;
+import com.enryold.onioncache.services.OnionDynamoDBService;
+import com.enryold.onioncache.services.OnionFileSystemService;
+import com.enryold.onioncache.services.OnionInMemoryLRUService;
+import com.enryold.onioncache.services.OnionRedisService;
 import org.apache.commons.cli.ParseException;
 import org.junit.After;
 import org.junit.Assert;
@@ -123,22 +122,22 @@ public class OnionCacheTest
     @Test
     public void test_LRU_REDIS_FALLBACK()
     {
-        RedisService redisService = new RedisService("localhost", REDIS_PORT);
+        OnionRedisService redisService = new OnionRedisService("localhost", REDIS_PORT);
 
-        InMemoryLRUService inMemoryLRUService = new InMemoryLRUService(100);
+        OnionInMemoryLRUService inMemoryLRUService = new OnionInMemoryLRUService(100);
 
 
 
         // Setup cache layers (Key function, Cache service, Model)
-        CacheLayer LRULayer = new CacheLayer<InMemoryLRUService, CacheLayerJsonMarshaller<Person>, Person>()
+        OnionCacheLayer LRULayer = new OnionCacheLayer<OnionInMemoryLRUService, OnionCacheLayerJsonMarshaller<Person>, Person>()
                 .withMainService(inMemoryLRUService)
-                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class));
+                .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
 
 
 
-        CacheLayer redisLayer = new CacheLayer<RedisService, CacheLayerJsonMarshaller<Person>, Person>()
+        OnionCacheLayer redisLayer = new OnionCacheLayer<OnionRedisService, OnionCacheLayerJsonMarshaller<Person>, Person>()
                 .withMainService(redisService)
-                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class));
+                .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
 
 
         // Test with fake model Person
@@ -154,8 +153,8 @@ public class OnionCacheTest
         Assert.assertTrue(setResult);
 
         // Check both service for object
-        Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
-        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
 
         // Get Object Again
         Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
@@ -174,24 +173,24 @@ public class OnionCacheTest
     @Test
     public void test_LRU_FILESYSTEM_FALLBACK()
     {
-        InMemoryLRUService inMemoryLRUService = new InMemoryLRUService(100);
+        OnionInMemoryLRUService inMemoryLRUService = new OnionInMemoryLRUService(100);
 
 
         try
         {
-            FileSystemService fileSystemService = new FileSystemService("build/tmp");
+            OnionFileSystemService onionFileSystemService = new OnionFileSystemService("build/tmp");
 
 
 
         // Setup cache layers (Cache service, Marshaller, Model)
-        CacheLayer LRULayer = new CacheLayer<InMemoryLRUService, CacheLayerJsonMarshaller<Person>, Person>()
+        OnionCacheLayer LRULayer = new OnionCacheLayer<OnionInMemoryLRUService, OnionCacheLayerJsonMarshaller<Person>, Person>()
                 .withMainService(inMemoryLRUService)
-                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class));
+                .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
 
 
-        CacheLayer fsLayer = new CacheLayer<FileSystemService, CacheLayerJsonMarshaller<Person>, Person>()
-                .withMainService(fileSystemService)
-                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class));
+        OnionCacheLayer fsLayer = new OnionCacheLayer<OnionFileSystemService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                .withMainService(onionFileSystemService)
+                .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
 
 
 
@@ -209,8 +208,8 @@ public class OnionCacheTest
         Assert.assertTrue(setResult);
 
         // Check both service for object
-        Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
-        Assert.assertTrue(fileSystemService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(onionFileSystemService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
 
         // Get Object Again
         Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
@@ -231,22 +230,22 @@ public class OnionCacheTest
     @Test
     public void test_REDIS_DYNAMODB_FALLBACK()
     {
-        RedisService redisService = new RedisService("localhost", REDIS_PORT);
+        OnionRedisService redisService = new OnionRedisService("localhost", REDIS_PORT);
 
-        DynamoDBService dynamoDBService = new DynamoDBService(dynamodb);
+        OnionDynamoDBService onionDynamoDBService = new OnionDynamoDBService(dynamodb);
 
 
         // Setup cache layers (Key function, Cache service, Model)
         /** THIS IS A FAKE MARSHALLER CAUSE DYNAMO-DB ALREADY HAVE HIS MARSHALLER */
-        CacheLayer DynamoDBLayer = new CacheLayer<DynamoDBService, CacheLayerDynamoDBMarshaller<Person>, Person>()
-                .withMainService(dynamoDBService)
-                .withMainServiceMarshaller(new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class));
+        OnionCacheLayer DynamoDBLayer = new OnionCacheLayer<OnionDynamoDBService, OnionCacheLayerDynamoDBMarshaller<Person>, Person>()
+                .withMainService(onionDynamoDBService)
+                .withMainServiceMarshaller(new OnionCacheLayerDynamoDBMarshaller<>(Person.class, Person.class));
 
 
 
-        CacheLayer redisLayer = new CacheLayer<RedisService, CacheLayerJsonMarshaller<Person>, Person>()
+        OnionCacheLayer redisLayer = new OnionCacheLayer<OnionRedisService, OnionCacheLayerJsonMarshaller<Person>, Person>()
                 .withMainService(redisService)
-                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class));
+                .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
 
 
         // Test with fake model Person
@@ -262,8 +261,8 @@ public class OnionCacheTest
         Assert.assertTrue(setResult);
 
         // Check both service for object
-        Assert.assertTrue(dynamoDBService.get(new Person("Jason", "Bourne"), new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
-        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(onionDynamoDBService.get(new Person("Jason", "Bourne"), new OnionCacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
+        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
 
         // Get Object Again
         Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
@@ -279,27 +278,27 @@ public class OnionCacheTest
     @Test
     public void test_LRU_REDIS_DYNAMODB_FALLBACK()
     {
-        InMemoryLRUService inMemoryLRUService = new InMemoryLRUService(100);
-        RedisService redisService = new RedisService("localhost", REDIS_PORT);
-        DynamoDBService dynamoDBService = new DynamoDBService(dynamodb);
+        OnionInMemoryLRUService inMemoryLRUService = new OnionInMemoryLRUService(100);
+        OnionRedisService redisService = new OnionRedisService("localhost", REDIS_PORT);
+        OnionDynamoDBService onionDynamoDBService = new OnionDynamoDBService(dynamodb);
 
 
         // Setup cache layers (Key function, Cache service, Model)
         /** THIS IS A FAKE MARSHALLER CAUSE DYNAMO-DB ALREADY HAVE HIS MARSHALLER */
-        CacheLayer DynamoDBLayer = new CacheLayer<DynamoDBService, CacheLayerDynamoDBMarshaller<Person>, Person>()
-                .withMainService(dynamoDBService)
-                .withMainServiceMarshaller(new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class));
+        OnionCacheLayer DynamoDBLayer = new OnionCacheLayer<OnionDynamoDBService, OnionCacheLayerDynamoDBMarshaller<Person>, Person>()
+                .withMainService(onionDynamoDBService)
+                .withMainServiceMarshaller(new OnionCacheLayerDynamoDBMarshaller<>(Person.class, Person.class));
 
 
         // Setup cache layers (Cache service, Marshaller, Model)
-        CacheLayer LRULayer = new CacheLayer<InMemoryLRUService, CacheLayerJsonMarshaller<Person>, Person>()
+        OnionCacheLayer LRULayer = new OnionCacheLayer<OnionInMemoryLRUService, OnionCacheLayerJsonMarshaller<Person>, Person>()
                 .withMainService(inMemoryLRUService)
-                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class));
+                .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
 
 
-        CacheLayer redisLayer = new CacheLayer<RedisService, CacheLayerJsonMarshaller<Person>, Person>()
+        OnionCacheLayer redisLayer = new OnionCacheLayer<OnionRedisService, OnionCacheLayerJsonMarshaller<Person>, Person>()
                 .withMainService(redisService)
-                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class));
+                .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
 
 
         // Test with fake model Person
@@ -316,9 +315,9 @@ public class OnionCacheTest
         Assert.assertTrue(setResult);
 
         // Check all services for object
-        Assert.assertTrue(dynamoDBService.get(new Person("Jason", "Bourne"), new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
-        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
-        Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(onionDynamoDBService.get(new Person("Jason", "Bourne"), new OnionCacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
+        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
 
         // Get Object Again
         Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
@@ -334,23 +333,23 @@ public class OnionCacheTest
     @Test
     public void test_REDIS_DYNAMODB_EXPIRATION_FALLBACK()
     {
-        RedisService redisService = new RedisService("localhost", REDIS_PORT);
+        OnionRedisService redisService = new OnionRedisService("localhost", REDIS_PORT);
 
-        DynamoDBService dynamoDBService = new DynamoDBService(dynamodb);
+        OnionDynamoDBService onionDynamoDBService = new OnionDynamoDBService(dynamodb);
 
 
 
         // Setup cache layers (Key function, Cache service, Model)
         /** THIS IS A FAKE MARSHALLER CAUSE DYNAMO-DB ALREADY HAVE HIS MARSHALLER */
-        CacheLayer DynamoDBLayer = new CacheLayer<DynamoDBService, CacheLayerDynamoDBMarshaller<Person>, Person>()
-                .withMainService(dynamoDBService)
-                .withMainServiceMarshaller(new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class));
+        OnionCacheLayer DynamoDBLayer = new OnionCacheLayer<OnionDynamoDBService, OnionCacheLayerDynamoDBMarshaller<Person>, Person>()
+                .withMainService(onionDynamoDBService)
+                .withMainServiceMarshaller(new OnionCacheLayerDynamoDBMarshaller<>(Person.class, Person.class));
 
 
 
-        CacheLayer redisLayer = new CacheLayer<RedisService, CacheLayerJsonMarshaller<Person>, Person>()
+        OnionCacheLayer redisLayer = new OnionCacheLayer<OnionRedisService, OnionCacheLayerJsonMarshaller<Person>, Person>()
                 .withMainService(redisService)
-                .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class))
+                .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class))
                 .withDefaultExpiration(60);
 
 
@@ -367,8 +366,8 @@ public class OnionCacheTest
         Assert.assertTrue(setResult);
 
         // Check both service for object
-        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
-        Assert.assertTrue(dynamoDBService.get(new Person("Jason", "Bourne"), new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
+        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(onionDynamoDBService.get(new Person("Jason", "Bourne"), new OnionCacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
 
         try {
             Thread.sleep(5000L);
@@ -377,10 +376,10 @@ public class OnionCacheTest
         }
 
         // Redis was expired
-        Assert.assertTrue(!redisService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(!redisService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
 
         // Dynamo still have object
-        Assert.assertTrue(dynamoDBService.get(new Person("Jason", "Bourne"), new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
+        Assert.assertTrue(onionDynamoDBService.get(new Person("Jason", "Bourne"), new OnionCacheLayerDynamoDBMarshaller<>(Person.class, Person.class)).isPresent());
 
 
 
@@ -388,7 +387,7 @@ public class OnionCacheTest
         Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
 
         // Redis now have object
-        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new CacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+        Assert.assertTrue(redisService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
 
 
         Assert.assertTrue(object.isPresent());

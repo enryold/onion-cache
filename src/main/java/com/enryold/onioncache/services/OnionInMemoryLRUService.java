@@ -1,31 +1,31 @@
 package com.enryold.onioncache.services;
 
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
-import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
 import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerService;
+import com.enryold.onioncache.utils.LRUMap;
 
 import java.util.Optional;
 
 
-public class DynamoDBService implements ICacheLayerService {
+public class OnionInMemoryLRUService implements ICacheLayerService {
 
-    DynamoDBMapper dynamoDBMapper;
-
-
+    private LRUMap<String, Object> cache;
 
 
-    public DynamoDBService(AmazonDynamoDB amazonDynamoDB)
+
+
+    public OnionInMemoryLRUService(int capacity)
     {
-        dynamoDBMapper = new DynamoDBMapper(amazonDynamoDB);
+        cache = new LRUMap<>(capacity);
     }
+
 
     @Override
     public boolean set(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
         Optional m = marshaller.marshall(value);
-        dynamoDBMapper.save(m.get());
+        cache.put(value.dataModelUniqueKey().get(), m.get());
         return m.isPresent();
     }
 
@@ -36,17 +36,11 @@ public class DynamoDBService implements ICacheLayerService {
 
     @Override
     public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
-        return marshaller.unMarshall(dynamoDBMapper.load(value));
+        return marshaller.unMarshall(cache.get(value.dataModelUniqueKey().get()));
     }
 
     @Override
     public boolean delete(ICacheLayerDataModel value) {
-        dynamoDBMapper.delete(value);
-        return true;
+        return cache.remove(value.dataModelUniqueKey().get()) != null;
     }
-
-
-
-
-
 }

@@ -11,7 +11,7 @@ import redis.clients.jedis.JedisPoolConfig;
 import java.util.Optional;
 
 
-public class RedisService implements ICacheLayerService {
+public class OnionRedisService implements ICacheLayerService {
 
     private JedisPool jedisPool;
     private String host;
@@ -19,10 +19,10 @@ public class RedisService implements ICacheLayerService {
 
 
 
-    public RedisService()
+    public OnionRedisService()
     {}
 
-    public RedisService(String host, Integer port)
+    public OnionRedisService(String host, Integer port)
     {
         this.host = host;
         this.port = port;

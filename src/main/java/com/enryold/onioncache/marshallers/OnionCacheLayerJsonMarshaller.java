@@ -1,6 +1,6 @@
 package com.enryold.onioncache.marshallers;
 
-import com.enryold.onioncache.CacheLayerMarshaller;
+import com.enryold.onioncache.OnionCacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -11,10 +11,10 @@ import java.util.Optional;
 /**
  * Created by enryold on 19/01/17.
  */
-public class CacheLayerJsonMarshaller<I> extends CacheLayerMarshaller<I, String> implements ICacheLayerMarshaller<I, String> {
+public class OnionCacheLayerJsonMarshaller<I> extends OnionCacheLayerMarshaller<I, String> implements ICacheLayerMarshaller<I, String> {
 
 
-    public CacheLayerJsonMarshaller(Class<I> iClazz, Class<String> oClazz) {
+    public OnionCacheLayerJsonMarshaller(Class<I> iClazz, Class<String> oClazz) {
         super(iClazz, oClazz);
     }
 
