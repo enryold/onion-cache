@@ -16,13 +16,13 @@ import java.util.Optional;
 /**
  * Created by enryold on 18/01/17.
  */
-public class FileSystemService implements ICacheLayerService {
+public class OnionFileSystemService implements ICacheLayerService {
 
 
     private String basePath;
 
 
-    public FileSystemService(String basePath) throws Exception {
+    public OnionFileSystemService(String basePath) throws Exception {
 
         if(!Files.isWritable(Paths.get(basePath)))
         {

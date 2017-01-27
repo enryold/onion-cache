@@ -2,16 +2,13 @@ package com.enryold.onioncache;
 
 
 import com.enryold.onioncache.interfaces.*;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.map.ObjectMapper;
 
-import java.io.IOException;
 import java.util.Optional;
 
 /**
  * Created by enryold on 16/01/17.
  */
-public class CacheLayer<S extends ICacheLayerService, M extends ICacheLayerMarshaller<T,?>, T extends ICacheLayerDataModel> implements ICacheLayer<S, M, T> {
+public class OnionCacheLayer<S extends ICacheLayerService, M extends ICacheLayerMarshaller<T,?>, T extends ICacheLayerDataModel> implements ICacheLayer<S, M, T> {
 
     private S service;
     private int defaultExpiration;
@@ -20,20 +17,20 @@ public class CacheLayer<S extends ICacheLayerService, M extends ICacheLayerMarsh
 
 
     @Override
-    public CacheLayer<S, M ,T> withMainService(S service) {
+    public OnionCacheLayer<S, M ,T> withMainService(S service) {
         this.service = service;
         return this;
     }
 
     @Override
-    public CacheLayer<S, M, T> withMainServiceMarshaller(ICacheLayerMarshaller marshaller) {
+    public OnionCacheLayer<S, M, T> withMainServiceMarshaller(ICacheLayerMarshaller marshaller) {
         this.marshaller = marshaller;
         return this;
     }
 
 
     @Override
-    public CacheLayer<S, M, T> withDefaultExpiration(int defaultExpiration) {
+    public OnionCacheLayer<S, M, T> withDefaultExpiration(int defaultExpiration) {
         this.defaultExpiration = defaultExpiration;
         return this;
     }

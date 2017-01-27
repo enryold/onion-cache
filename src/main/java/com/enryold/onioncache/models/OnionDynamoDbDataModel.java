@@ -3,7 +3,7 @@ package com.enryold.onioncache.models;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import com.enryold.onioncache.CacheLayerDataModelKey;
+import com.enryold.onioncache.OnionCacheLayerDataModelKey;
 import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
 import com.enryold.onioncache.interfaces.ICacheLayerDataModelKey;
 
@@ -14,7 +14,7 @@ import java.util.Optional;
 /**
  * Created by enryold on 26/01/17.
  */
-public class DynamoDbDataModel implements ICacheLayerDataModel {
+public class OnionDynamoDbDataModel implements ICacheLayerDataModel {
     @Override
     public ICacheLayerDataModelKey dataModelUniqueKey() {
 
@@ -26,7 +26,7 @@ public class DynamoDbDataModel implements ICacheLayerDataModel {
             Optional<Method> rangeMethod = this.getDataModelAnnotationMethod(DynamoDBRangeKey.class);
             Object range =(rangeMethod.isPresent()) ? String.valueOf(rangeMethod.get().invoke(this)) : "";
 
-            return new CacheLayerDataModelKey(hash.toString()+range.toString());
+            return new OnionCacheLayerDataModelKey(hash.toString()+range.toString());
         }
         catch(Exception e)
         {

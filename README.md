@@ -1,7 +1,7 @@
 # onion-cache 
 
 [![Build Status](https://travis-ci.org/enryold/onion-cache.svg?branch=develop)](https://travis-ci.org/enryold/onion-cache)
-
+[![](https://jitpack.io/v/enryold/onion-cache.svg)](https://jitpack.io/#enryold/onion-cache)
 
 # Multilevel cache system for Java 8 
 
@@ -44,6 +44,10 @@
 - Under /models you can find an example with dynamodb as datasource.
     
 
+## Installation:
+
+Look at https://jitpack.io/#enryold/onion-cache/
+
 
 ## Let's start:
 
@@ -67,7 +71,7 @@ InMemoryLRUService inMemoryLRUService = new InMemoryLRUService(100);
 RedisService redisService = new RedisService("localhost", 6379);
 
 // DYNAMODB SERVICE
-DynamoDBService dynamoDBService = new DynamoDBService(dynamodb);
+DynamoDBService onionDynamoDBService = new DynamoDBService(dynamodb);
 
 // NOW BUILD CACHE LAYERS FOR THE MODEL Person, WITH REPRESENT A PERSON WITH NAME AND SURNAME PROPERTIES.
 CacheLayer LRULayer = new CacheLayer<InMemoryLRUService, CacheLayerJsonMarshaller<Person>, Person>()
@@ -75,7 +79,7 @@ CacheLayer LRULayer = new CacheLayer<InMemoryLRUService, CacheLayerJsonMarshalle
     .withMainServiceMarshaller(new CacheLayerJsonMarshaller<>(Person.class, String.class));
 
 CacheLayer DynamoDBLayer = new CacheLayer<DynamoDBService, CacheLayerDynamoDBMarshaller<Person>, Person>()
-    .withMainService(dynamoDBService)
+    .withMainService(onionDynamoDBService)
     .withMainServiceMarshaller(new CacheLayerDynamoDBMarshaller<>(Person.class, Person.class));
 
 // IN REDIS WE CAN SET DEFAULT EXPIRATION FOR KEYS IN SECONDS

@@ -5,11 +5,11 @@ import com.enryold.onioncache.interfaces.ICacheLayerDataModelKey;
 /**
  * Created by enryold on 26/01/17.
  */
-public class CacheLayerDataModelKey implements ICacheLayerDataModelKey {
+public class OnionCacheLayerDataModelKey implements ICacheLayerDataModelKey {
 
     String key;
 
-    public CacheLayerDataModelKey(String key)
+    public OnionCacheLayerDataModelKey(String key)
     {
         this.key = key;
     }

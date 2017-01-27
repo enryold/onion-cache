@@ -3,12 +3,12 @@ package com.enryold.onioncache;
 /**
  * Created by enryold on 16/01/17.
  */
-public class CacheLayerMarshaller<I, O>
+public class OnionCacheLayerMarshaller<I, O>
 {
     private Class<I> inputClazz;
     private Class<O> outputClazz;
 
-    public CacheLayerMarshaller(Class<I> iClazz, Class<O> oClazz)
+    public OnionCacheLayerMarshaller(Class<I> iClazz, Class<O> oClazz)
     {
         this.inputClazz = iClazz;
         this.outputClazz = oClazz;

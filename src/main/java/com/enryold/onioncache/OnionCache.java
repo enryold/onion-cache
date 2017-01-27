@@ -13,18 +13,18 @@ import java.util.Optional;
  */
 public class OnionCache<T extends ICacheLayerDataModel>
 {
-    private ArrayList<CacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T>> layers = new ArrayList<>();
+    private ArrayList<OnionCacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T>> layers = new ArrayList<>();
 
 
 
 
-    public OnionCache addLayer(CacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T> layer)
+    public OnionCache addLayer(OnionCacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T> layer)
     {
         layers.add(layer);
         return this;
     }
 
-    public OnionCache addLayerAtLevel(CacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T> layer, int level)
+    public OnionCache addLayerAtLevel(OnionCacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T> layer, int level)
     {
         layers.add(level, layer);
         return this;
@@ -33,15 +33,15 @@ public class OnionCache<T extends ICacheLayerDataModel>
 
     public Optional<T> get(T t)
     {
-        ArrayList<CacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T>> cacheMissLayers = new ArrayList<>();
+        ArrayList<OnionCacheLayer<? extends ICacheLayerService, ? extends ICacheLayerMarshaller, T>> cacheMissLayers = new ArrayList<>();
 
-        ListIterator<CacheLayer<?, ? extends ICacheLayerMarshaller, T>> iterator = layers.listIterator();
+        ListIterator<OnionCacheLayer<?, ? extends ICacheLayerMarshaller, T>> iterator = layers.listIterator();
 
         Optional<T> result = Optional.empty();
 
         while (iterator.hasNext())
         {
-            CacheLayer<?, ?, T> layer = iterator.next();
+            OnionCacheLayer<?, ?, T> layer = iterator.next();
             result = layer.get(t);
             if(result.isPresent()) { break; }
             else{ cacheMissLayers.add(layer); }
@@ -60,7 +60,7 @@ public class OnionCache<T extends ICacheLayerDataModel>
 
     public boolean set(T object, int expire)
     {
-        for (CacheLayer<?, ?, T> layer : layers) {
+        for (OnionCacheLayer<?, ?, T> layer : layers) {
             if (!layer.set(object, expire)) {
                 return false;
             }
@@ -72,7 +72,7 @@ public class OnionCache<T extends ICacheLayerDataModel>
 
     public boolean delete(T object)
     {
-        for (CacheLayer<?, ?, T> layer : layers) {
+        for (OnionCacheLayer<?, ?, T> layer : layers) {
             if (!layer.delete(object)) {
                 return false;
             }
