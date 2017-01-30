@@ -1,5 +1,5 @@
 group 'com.enryold'
-version '1.0-SNAPSHOT'
+version '0.0.4'
 
 apply plugin: 'java'
 
