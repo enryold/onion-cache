@@ -228,6 +228,67 @@ public class OnionCacheTest
 
 
     @Test
+    public void test_LRU_FILESYSTEM_FALLBACK_WITH_FILENOTFOUND()
+    {
+        OnionInMemoryLRUService inMemoryLRUService = new OnionInMemoryLRUService(100);
+
+
+        try
+        {
+            OnionFileSystemService onionFileSystemService = new OnionFileSystemService("build/tmp");
+            onionFileSystemService.delete(new Person("Jason", "Bourne"));
+
+
+            // Setup cache layers (Cache service, Marshaller, Model)
+            OnionCacheLayer LRULayer = new OnionCacheLayer<OnionInMemoryLRUService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                    .withMainService(inMemoryLRUService)
+                    .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
+
+
+            OnionCacheLayer fsLayer = new OnionCacheLayer<OnionFileSystemService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                    .withMainService(onionFileSystemService)
+                    .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
+
+
+
+
+            // Test with fake model Person
+            OnionCache<Person> onionCache = new OnionCache<Person>()
+                    .addLayer(LRULayer)
+                    .addLayer(fsLayer);
+
+
+            Assert.assertTrue(!onionFileSystemService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+
+            Person goJason = new Person("Jason", "Bourne");
+
+            boolean setResult = onionCache.set(goJason, 30 );
+
+            // Check if result is true
+            Assert.assertTrue(setResult);
+
+            // Check both service for object
+            Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+            Assert.assertTrue(onionFileSystemService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+            // Get Object Again
+            Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
+
+            Assert.assertTrue(object.isPresent());
+            Assert.assertTrue(object.get().getName().equals(goJason.getName()));
+            Assert.assertTrue(object.get().getSurname().equals(goJason.getSurname()));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.assertTrue(false);
+        }
+
+    }
+
+
+
+    @Test
     public void test_REDIS_DYNAMODB_FALLBACK()
     {
         OnionRedisService redisService = new OnionRedisService("localhost", REDIS_PORT);

@@ -89,7 +89,8 @@ public class OnionFileSystemService implements ICacheLayerService {
     public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
         try
         {
-            return marshaller.unMarshall(new String(Files.readAllBytes(pathFromKey(value.dataModelUniqueKey().get()))));
+            Path path = pathFromKey(value.dataModelUniqueKey().get());
+            return Files.exists(path) ? marshaller.unMarshall(new String(Files.readAllBytes(path))) : Optional.empty();
         }
         catch (IOException e)
         {
