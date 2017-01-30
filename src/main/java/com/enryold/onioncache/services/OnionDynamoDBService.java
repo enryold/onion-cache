@@ -36,7 +36,8 @@ public class OnionDynamoDBService implements ICacheLayerService {
 
     @Override
     public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
-        return marshaller.unMarshall(dynamoDBMapper.load(value));
+        ICacheLayerDataModel obj = dynamoDBMapper.load(value);
+        return obj != null ? marshaller.unMarshall(obj) : Optional.empty();
     }
 
     @Override
