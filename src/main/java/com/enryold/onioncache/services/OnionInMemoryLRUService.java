@@ -36,7 +36,8 @@ public class OnionInMemoryLRUService implements ICacheLayerService {
 
     @Override
     public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
-        return marshaller.unMarshall(cache.get(value.dataModelUniqueKey().get()));
+        Object obj = cache.get(value.dataModelUniqueKey().get());
+        return obj != null ? marshaller.unMarshall(obj) : Optional.empty();
     }
 
     @Override
