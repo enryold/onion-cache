@@ -15,8 +15,13 @@ import java.util.Optional;
  * Created by enryold on 26/01/17.
  */
 public class OnionDynamoDbDataModel implements ICacheLayerDataModel {
+
+    protected ICacheLayerDataModelKey customDataModelKey;
+
     @Override
     public ICacheLayerDataModelKey dataModelUniqueKey() {
+
+        if(customDataModelKey != null) { return customDataModelKey; }
 
         try
         {
@@ -33,6 +38,12 @@ public class OnionDynamoDbDataModel implements ICacheLayerDataModel {
             return null;
         }
 
+    }
+
+    @Override
+    public ICacheLayerDataModelKey setCustomDataModelUniqueKey(String key) {
+        this.customDataModelKey = new OnionCacheLayerDataModelKey(key);
+        return customDataModelKey;
     }
 
     @Override
