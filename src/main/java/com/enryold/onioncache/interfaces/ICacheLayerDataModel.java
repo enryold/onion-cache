@@ -6,7 +6,7 @@ package com.enryold.onioncache.interfaces;
  */
 public interface ICacheLayerDataModel
 {
-    ICacheLayerDataModelKey dataModelUniqueKey();
-    ICacheLayerDataModelKey setCustomDataModelUniqueKey(String key);
+    String getCustomDataKey();
+    void setCustomDataKey(String key);
     String dataModelTableName();
 }

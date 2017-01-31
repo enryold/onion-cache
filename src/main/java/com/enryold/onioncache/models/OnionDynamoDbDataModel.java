@@ -3,9 +3,6 @@ package com.enryold.onioncache.models;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
-import com.enryold.onioncache.OnionCacheLayerDataModelKey;
-import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
-import com.enryold.onioncache.interfaces.ICacheLayerDataModelKey;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -14,14 +11,13 @@ import java.util.Optional;
 /**
  * Created by enryold on 26/01/17.
  */
-public class OnionDynamoDbDataModel implements ICacheLayerDataModel {
+public class OnionDynamoDbDataModel extends OnionDataModel {
 
-    protected ICacheLayerDataModelKey customDataModelKey;
 
     @Override
-    public ICacheLayerDataModelKey dataModelUniqueKey() {
+    public String getCustomDataKey() {
 
-        if(customDataModelKey != null) { return customDataModelKey; }
+        if(customDataKey != null) { return customDataKey; }
 
         try
         {
@@ -31,19 +27,19 @@ public class OnionDynamoDbDataModel implements ICacheLayerDataModel {
             Optional<Method> rangeMethod = this.getDataModelAnnotationMethod(DynamoDBRangeKey.class);
             Object range =(rangeMethod.isPresent()) ? String.valueOf(rangeMethod.get().invoke(this)) : "";
 
-            return new OnionCacheLayerDataModelKey(hash.toString()+range.toString());
+            customDataKey = hash.toString()+range.toString();
         }
         catch(Exception e)
         {
             return null;
         }
 
+        return customDataKey;
     }
 
     @Override
-    public ICacheLayerDataModelKey setCustomDataModelUniqueKey(String key) {
-        this.customDataModelKey = new OnionCacheLayerDataModelKey(key);
-        return customDataModelKey;
+    public void setCustomDataKey(String customDataKey) {
+        this.customDataKey = customDataKey;
     }
 
     @Override

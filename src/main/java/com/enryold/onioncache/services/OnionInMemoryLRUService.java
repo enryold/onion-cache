@@ -25,7 +25,7 @@ public class OnionInMemoryLRUService implements ICacheLayerService {
     @Override
     public boolean set(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
         Optional m = marshaller.marshall(value);
-        cache.put(value.dataModelUniqueKey().get(), m.get());
+        cache.put(value.getCustomDataKey(), m.get());
         return m.isPresent();
     }
 
@@ -36,12 +36,12 @@ public class OnionInMemoryLRUService implements ICacheLayerService {
 
     @Override
     public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
-        Object obj = cache.get(value.dataModelUniqueKey().get());
+        Object obj = cache.get(value.getCustomDataKey());
         return obj != null ? marshaller.unMarshall(obj) : Optional.empty();
     }
 
     @Override
     public boolean delete(ICacheLayerDataModel value) {
-        return cache.remove(value.dataModelUniqueKey().get()) != null;
+        return cache.remove(value.getCustomDataKey()) != null;
     }
 }
