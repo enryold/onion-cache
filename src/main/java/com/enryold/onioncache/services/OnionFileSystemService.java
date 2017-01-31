@@ -64,7 +64,7 @@ public class OnionFileSystemService implements ICacheLayerService {
 
             if(!result.isPresent()) { return false; }
 
-            Files.write(pathFromKey(value.dataModelUniqueKey().get()), byteFromValue(result.get()));
+            Files.write(pathFromKey(value.getCustomDataKey()), byteFromValue(result.get()));
         }
         catch (FileNotFoundException e)
         {
@@ -89,7 +89,7 @@ public class OnionFileSystemService implements ICacheLayerService {
     public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
         try
         {
-            Path path = pathFromKey(value.dataModelUniqueKey().get());
+            Path path = pathFromKey(value.getCustomDataKey());
             return Files.exists(path) ? marshaller.unMarshall(new String(Files.readAllBytes(path))) : Optional.empty();
         }
         catch (IOException e)
@@ -102,7 +102,7 @@ public class OnionFileSystemService implements ICacheLayerService {
     @Override
     public boolean delete(ICacheLayerDataModel value) {
         try {
-            Files.delete(pathFromKey(value.dataModelUniqueKey().get()));
+            Files.delete(pathFromKey(value.getCustomDataKey()));
             return true;
         } catch (IOException e) {
             e.printStackTrace();

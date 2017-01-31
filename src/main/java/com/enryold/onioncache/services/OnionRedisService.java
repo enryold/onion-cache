@@ -38,7 +38,7 @@ public class OnionRedisService implements ICacheLayerService {
         try (Jedis jedis = jedisPool.getResource())
         {
             Optional<String> val = marshaller.marshall(value);
-            val.ifPresent( s -> jedis.set(value.dataModelUniqueKey().get(), s));
+            val.ifPresent( s -> jedis.set(value.getCustomDataKey(), s));
             return true;
         }
         catch (Exception e) {  }
@@ -50,7 +50,7 @@ public class OnionRedisService implements ICacheLayerService {
         try (Jedis jedis = jedisPool.getResource())
         {
             Optional<String> val = marshaller.marshall(value);
-            val.ifPresent( s -> jedis.setex(value.dataModelUniqueKey().get(), expiration, s));
+            val.ifPresent( s -> jedis.setex(value.getCustomDataKey(), expiration, s));
             return true;
         }
         catch (Exception e) {  }
@@ -61,7 +61,7 @@ public class OnionRedisService implements ICacheLayerService {
     public Optional get(ICacheLayerDataModel value, ICacheLayerMarshaller marshaller) {
         try (Jedis jedis = jedisPool.getResource())
         {
-            String result = jedis.get(value.dataModelUniqueKey().get());
+            String result = jedis.get(value.getCustomDataKey());
             return result == null ? Optional.empty() : marshaller.unMarshall(result);
         }
         catch (Exception e) { return Optional.empty(); }
@@ -69,7 +69,7 @@ public class OnionRedisService implements ICacheLayerService {
 
     @Override
     public boolean delete(ICacheLayerDataModel value) {
-        try (Jedis jedis = jedisPool.getResource()) { jedis.del(value.dataModelUniqueKey().get()); return true; }
+        try (Jedis jedis = jedisPool.getResource()) { jedis.del(value.getCustomDataKey()); return true; }
         catch (Exception e) { return false; }
     }
 
