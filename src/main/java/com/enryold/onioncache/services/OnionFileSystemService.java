@@ -102,6 +102,9 @@ public class OnionFileSystemService implements ICacheLayerService {
     @Override
     public boolean delete(ICacheLayerDataModel value) {
         try {
+            Path path = pathFromKey(value.getCustomDataKey());
+            if(!Files.exists(path)) { return false; }
+
             Files.delete(pathFromKey(value.getCustomDataKey()));
             return true;
         } catch (IOException e) {
