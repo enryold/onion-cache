@@ -4,14 +4,14 @@ import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerService;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Created by enryold on 18/01/17.
@@ -20,6 +20,7 @@ public class OnionFileSystemService implements ICacheLayerService {
 
 
     private String basePath;
+    private boolean withGzip;
 
 
     public OnionFileSystemService(String basePath) throws Exception {
@@ -31,6 +32,61 @@ public class OnionFileSystemService implements ICacheLayerService {
         else
         {
             this.basePath = basePath;
+            this.withGzip = false;
+        }
+
+    }
+
+    public OnionFileSystemService withGzipCompression(boolean withGzip)
+    {
+        this.withGzip = true;
+        return this;
+    }
+
+
+    private String ungzip(byte[] bytes)
+    {
+        try
+        {
+            InputStreamReader isr = new InputStreamReader(new GZIPInputStream(new ByteArrayInputStream(bytes)), StandardCharsets.UTF_8);
+            StringWriter sw = new StringWriter();
+            char[] chars = new char[1024];
+            for (int len; (len = isr.read(chars)) > 0; ) {
+                sw.write(chars, 0, len);
+            }
+            return sw.toString();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    private byte[] gzip(Object s)
+    {
+        try
+        {
+            if(s instanceof String)
+            {
+                String v = (String)s;
+                ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                GZIPOutputStream gzip = new GZIPOutputStream(bos);
+                OutputStreamWriter osw = new OutputStreamWriter(gzip, StandardCharsets.UTF_8);
+                osw.write(v);
+                osw.close();
+                return bos.toByteArray();
+            }
+            else
+            {
+                return new byte[0];
+            }
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            return new byte[0];
         }
 
     }
@@ -39,7 +95,7 @@ public class OnionFileSystemService implements ICacheLayerService {
 
     private Path pathFromKey(String key)
     {
-        return Paths.get(basePath+File.separator+key);
+        return Paths.get(basePath+File.separator+key+((withGzip) ? ".gz" : ""));
     }
 
     private byte[] byteFromValue(Object value)
@@ -64,7 +120,9 @@ public class OnionFileSystemService implements ICacheLayerService {
 
             if(!result.isPresent()) { return false; }
 
-            Files.write(pathFromKey(value.getCustomDataKey()), byteFromValue(result.get()));
+            byte[] bytes = (this.withGzip) ? gzip(result.get()) : byteFromValue(result.get());
+
+            Files.write(pathFromKey(value.getCustomDataKey()), bytes);
         }
         catch (FileNotFoundException e)
         {
@@ -90,7 +148,11 @@ public class OnionFileSystemService implements ICacheLayerService {
         try
         {
             Path path = pathFromKey(value.getCustomDataKey());
-            return Files.exists(path) ? marshaller.unMarshall(new String(Files.readAllBytes(path))) : Optional.empty();
+            byte[] bytes = Files.readAllBytes(path);
+
+            String result = (this.withGzip) ? ungzip(bytes) : new String(bytes);
+
+            return Files.exists(path) ? marshaller.unMarshall(result) : Optional.empty();
         }
         catch (IOException e)
         {
