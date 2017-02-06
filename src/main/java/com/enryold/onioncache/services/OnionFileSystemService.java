@@ -148,11 +148,14 @@ public class OnionFileSystemService implements ICacheLayerService {
         try
         {
             Path path = pathFromKey(value.getCustomDataKey());
+
+            if(!Files.exists(path)) { return Optional.empty(); }
+
             byte[] bytes = Files.readAllBytes(path);
 
             String result = (this.withGzip) ? ungzip(bytes) : new String(bytes);
 
-            return Files.exists(path) ? marshaller.unMarshall(result) : Optional.empty();
+            return marshaller.unMarshall(result);
         }
         catch (IOException e)
         {
