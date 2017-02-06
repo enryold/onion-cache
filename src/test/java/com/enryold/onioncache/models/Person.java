@@ -1,8 +1,11 @@
 package com.enryold.onioncache.models;
 
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBAttribute;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBHashKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBRangeKey;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBTable;
+
+import java.util.ArrayList;
 
 
 /**
@@ -15,10 +18,12 @@ public class Person extends OnionDynamoDbDataModel
         public static final String TABLE_NAME = "person";
         public static final String HASH_KEY = "name";
         public static final String RANGE_KEY = "surname";
+        public static final String ATTRIBUTES = "attributes";
     }
 
     private String name;
     private String surname;
+    private ArrayList<String> attributes;
 
     public Person() {}
 
@@ -45,6 +50,15 @@ public class Person extends OnionDynamoDbDataModel
 
     public void setSurname(String surname) {
         this.surname = surname;
+    }
+
+    @DynamoDBAttribute(attributeName = Attributes.ATTRIBUTES)
+    public ArrayList<String> getAttributes() {
+        return attributes;
+    }
+
+    public void setAttributes(ArrayList<String> attributes) {
+        this.attributes = attributes;
     }
 
 

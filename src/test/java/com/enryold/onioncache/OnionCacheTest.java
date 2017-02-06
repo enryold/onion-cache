@@ -22,6 +22,7 @@ import redis.embedded.RedisServer;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Optional;
 
 /**
@@ -116,6 +117,20 @@ public class OnionCacheTest
         } catch (Exception ex) {
             ex.printStackTrace();
         }
+    }
+
+    private Person createPersonWithALotOfAttributes(String name, String surname)
+    {
+        Person person = new Person(name, surname);
+        ArrayList<String> attributes = new ArrayList<>();
+
+        for(int i=0;i<10000;i++)
+        {
+            attributes.add("ATTRIBUTE_"+i);
+        }
+
+        person.setAttributes(attributes);
+        return person;
     }
 
 
@@ -327,6 +342,193 @@ public class OnionCacheTest
 
 
             Person goJason = new Person("Jason", "Bourne");
+
+            boolean setResult = onionCache.set(goJason, 30 );
+
+            // Check if result is true
+            Assert.assertTrue(setResult);
+
+            // Check both service for object
+            Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+            Assert.assertTrue(onionFileSystemService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+            // Get Object Again
+            Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
+
+            Assert.assertTrue(object.isPresent());
+            Assert.assertTrue(object.get().getName().equals(goJason.getName()));
+            Assert.assertTrue(object.get().getSurname().equals(goJason.getSurname()));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.assertTrue(false);
+        }
+
+    }
+
+
+
+
+    @Test
+    public void test_LRU_FILESYSTEM_FALLBACK_GZIP()
+    {
+        OnionInMemoryLRUService inMemoryLRUService = new OnionInMemoryLRUService(100);
+
+
+        try
+        {
+            OnionFileSystemService onionFileSystemService = new OnionFileSystemService("build/tmp")
+                    .withGzipCompression(true);
+
+
+
+            // Setup cache layers (Cache service, Marshaller, Model)
+            OnionCacheLayer LRULayer = new OnionCacheLayer<OnionInMemoryLRUService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                    .withMainService(inMemoryLRUService)
+                    .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
+
+
+            OnionCacheLayer fsLayer = new OnionCacheLayer<OnionFileSystemService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                    .withMainService(onionFileSystemService)
+                    .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
+
+
+
+
+            // Test with fake model Person
+            OnionCache<Person> onionCache = new OnionCache<Person>()
+                    .addLayer(LRULayer)
+                    .addLayer(fsLayer);
+
+            Person goJason = createPersonWithALotOfAttributes("Jason", "Bourne");
+
+            boolean setResult = onionCache.set(goJason, 30 );
+
+            // Check if result is true
+            Assert.assertTrue(setResult);
+
+            // Check both service for object
+            Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+            Assert.assertTrue(onionFileSystemService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+            // Get Object Again
+            Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
+
+            Assert.assertTrue(object.isPresent());
+            Assert.assertTrue(object.get().getName().equals(goJason.getName()));
+            Assert.assertTrue(object.get().getSurname().equals(goJason.getSurname()));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.assertTrue(false);
+        }
+
+    }
+
+
+
+    @Test
+    public void test_LRU_FILESYSTEM_FALLBACK_WITH_LRU_DELETE_GZIP()
+    {
+        OnionInMemoryLRUService inMemoryLRUService = new OnionInMemoryLRUService(100);
+
+
+        try
+        {
+            OnionFileSystemService onionFileSystemService = new OnionFileSystemService("build/tmp")
+                    .withGzipCompression(true);
+
+
+
+            // Setup cache layers (Cache service, Marshaller, Model)
+            OnionCacheLayer LRULayer = new OnionCacheLayer<OnionInMemoryLRUService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                    .withMainService(inMemoryLRUService)
+                    .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
+
+
+            OnionCacheLayer fsLayer = new OnionCacheLayer<OnionFileSystemService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                    .withMainService(onionFileSystemService)
+                    .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
+
+
+
+
+            // Test with fake model Person
+            OnionCache<Person> onionCache = new OnionCache<Person>()
+                    .addLayer(LRULayer)
+                    .addLayer(fsLayer);
+
+            Person goJason = createPersonWithALotOfAttributes("Jason", "Bourne");
+
+            boolean setResult = onionCache.set(goJason, 30 );
+
+            // Check if result is true
+            Assert.assertTrue(setResult);
+
+            // Check both service for object
+            Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+            Assert.assertTrue(onionFileSystemService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+            // DELETE FROM LRU
+            inMemoryLRUService.delete(new Person("Jason", "Bourne"));
+            Assert.assertTrue(!inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+
+            // Get Object Again
+            Optional<Person> object = onionCache.get(new Person("Jason", "Bourne"));
+            Assert.assertTrue(inMemoryLRUService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+
+            Assert.assertTrue(object.isPresent());
+            Assert.assertTrue(object.get().getName().equals(goJason.getName()));
+            Assert.assertTrue(object.get().getSurname().equals(goJason.getSurname()));
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assert.assertTrue(false);
+        }
+
+    }
+
+
+
+
+    @Test
+    public void test_LRU_FILESYSTEM_FALLBACK_WITH_FILENOTFOUND_GZIP()
+    {
+        OnionInMemoryLRUService inMemoryLRUService = new OnionInMemoryLRUService(100);
+
+
+        try
+        {
+            OnionFileSystemService onionFileSystemService = new OnionFileSystemService("build/tmp")
+                    .withGzipCompression(true);
+            onionFileSystemService.delete(new Person("Jason", "Bourne"));
+
+
+            // Setup cache layers (Cache service, Marshaller, Model)
+            OnionCacheLayer LRULayer = new OnionCacheLayer<OnionInMemoryLRUService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                    .withMainService(inMemoryLRUService)
+                    .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
+
+
+            OnionCacheLayer fsLayer = new OnionCacheLayer<OnionFileSystemService, OnionCacheLayerJsonMarshaller<Person>, Person>()
+                    .withMainService(onionFileSystemService)
+                    .withMainServiceMarshaller(new OnionCacheLayerJsonMarshaller<>(Person.class, String.class));
+
+
+
+
+            // Test with fake model Person
+            OnionCache<Person> onionCache = new OnionCache<Person>()
+                    .addLayer(LRULayer)
+                    .addLayer(fsLayer);
+
+
+            Assert.assertTrue(!onionFileSystemService.get(new Person("Jason", "Bourne"), new OnionCacheLayerJsonMarshaller<>(Person.class, String.class)).isPresent());
+
+
+            Person goJason = createPersonWithALotOfAttributes("Jason", "Bourne");
 
             boolean setResult = onionCache.set(goJason, 30 );
 
