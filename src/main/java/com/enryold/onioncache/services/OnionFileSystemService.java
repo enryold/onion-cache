@@ -54,7 +54,10 @@ public class OnionFileSystemService implements ICacheLayerService {
             for (int len; (len = isr.read(chars)) > 0; ) {
                 sw.write(chars, 0, len);
             }
-            return sw.toString();
+            String result = sw.toString();
+            sw.close();
+            isr.close();
+            return result;
         }
         catch(Exception e)
         {
@@ -76,7 +79,10 @@ public class OnionFileSystemService implements ICacheLayerService {
                 OutputStreamWriter osw = new OutputStreamWriter(gzip, StandardCharsets.UTF_8);
                 osw.write(v);
                 osw.close();
-                return bos.toByteArray();
+                byte[] result =  bos.toByteArray();
+                bos.close();
+                gzip.close();
+                return result;
             }
             else
             {
@@ -154,6 +160,8 @@ public class OnionFileSystemService implements ICacheLayerService {
             byte[] bytes = Files.readAllBytes(path);
 
             String result = (this.withGzip) ? ungzip(bytes) : new String(bytes);
+
+            if(result == null) { return Optional.empty(); }
 
             return marshaller.unMarshall(result);
         }
