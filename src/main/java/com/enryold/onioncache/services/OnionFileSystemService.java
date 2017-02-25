@@ -98,6 +98,11 @@ public class OnionFileSystemService implements ICacheLayerService {
     }
 
 
+    public Path pathForObject(ICacheLayerDataModel value)
+    {
+        return pathFromKey(value.getCustomDataKey());
+    }
+
 
     private Path pathFromKey(String key)
     {
