@@ -3,6 +3,7 @@ package com.enryold.onioncache.services;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapper;
+import com.amazonaws.services.dynamodbv2.datamodeling.DynamoDBMapperConfig;
 import com.enryold.onioncache.interfaces.ICacheLayerDataModel;
 import com.enryold.onioncache.interfaces.ICacheLayerMarshaller;
 import com.enryold.onioncache.interfaces.ICacheLayerService;
@@ -20,6 +21,11 @@ public class OnionDynamoDBService implements ICacheLayerService {
     public OnionDynamoDBService(AmazonDynamoDB amazonDynamoDB)
     {
         dynamoDBMapper = new DynamoDBMapper(amazonDynamoDB);
+    }
+
+    public OnionDynamoDBService(AmazonDynamoDB amazonDynamoDB, DynamoDBMapperConfig config)
+    {
+        dynamoDBMapper = new DynamoDBMapper(amazonDynamoDB, config);
     }
 
     @Override
